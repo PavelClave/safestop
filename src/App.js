@@ -109,12 +109,7 @@ const zoneLabels = { природа: "🌿 Природа", градски: "�
 
 const createIcon = (color) => L.divIcon({
   className: "",
-  html: `<div style="
-    width:18px;height:18px;border-radius:50%;
-    background:${color};
-    border:3px solid white;
-    box-shadow:0 0 10px ${color};
-  "></div>`,
+  html: `<div style="width:18px;height:18px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 0 10px ${color};"></div>`,
   iconSize: [18, 18],
   iconAnchor: [9, 9],
 });
@@ -122,12 +117,7 @@ const createIcon = (color) => L.divIcon({
 const greenIcon = createIcon("#22c55e");
 const yellowIcon = createIcon("#f59e0b");
 const redIcon = createIcon("#ef4444");
-
-const getIcon = (safety) => {
-  if (safety >= 4.5) return greenIcon;
-  if (safety >= 3.5) return yellowIcon;
-  return redIcon;
-};
+const getIcon = (safety) => safety >= 4.5 ? greenIcon : safety >= 3.5 ? yellowIcon : redIcon;
 
 const StarRating = ({ value, size = 14 }) => (
   <span style={{ fontSize: size, letterSpacing: 1 }}>
@@ -166,6 +156,7 @@ export default function App() {
   const [showAdd, setShowAdd] = useState(false);
   const [activeTab, setActiveTab] = useState("map");
   const [toast, setToast] = useState(null);
+  const [nightMode, setNightMode] = useState(true);
 
   const filtered = SPOTS.filter(s => {
     const matchType = filter === "all" || s.type === filter || s.type === "all";
@@ -180,53 +171,51 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  const closeSelected = () => setSelected(null);
+
+  const tileUrl = nightMode
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+
+  const bg = nightMode ? "#0a0b14" : "#f0f4f8";
+  const headerBg = nightMode ? "#0d0f1e" : "#ffffff";
+  const headerBorder = nightMode ? "rgba(100,140,255,0.15)" : "rgba(0,0,0,0.1)";
+  const textColor = nightMode ? "#e8eaf6" : "#1a202c";
+  const subTextColor = nightMode ? "#7c8ab8" : "#64748b";
+  const panelBg = nightMode ? "#0d0f1e" : "#ffffff";
+  const cardBg = nightMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)";
+  const cardBorder = nightMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const filterBg = nightMode ? "rgba(13,15,30,0.95)" : "#f8fafc";
+
   return (
-    <div style={{
-      fontFamily: "'Segoe UI', sans-serif",
-      background: "#0a0b14",
-      minHeight: "100vh",
-      color: "#e8eaf6",
-      display: "flex",
-      flexDirection: "column",
-    }}>
+    <div style={{ fontFamily: "'Segoe UI', sans-serif", background: bg, minHeight: "100vh", color: textColor, display: "flex", flexDirection: "column" }}>
+
       {/* Header */}
-      <header style={{
-        background: "#0d0f1e",
-        borderBottom: "1px solid rgba(100,140,255,0.15)",
-        padding: "0 20px",
-        zIndex: 1000,
-        position: "relative",
-      }}>
+      <header style={{ background: headerBg, borderBottom: `1px solid ${headerBorder}`, padding: "0 20px", zIndex: 1000, position: "relative" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", gap: 16, padding: "12px 0" }}>
-          <div style={{
-            background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-            borderRadius: 12, width: 42, height: 42,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 20, flexShrink: 0,
-          }}>🧭</div>
+          <div style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", borderRadius: 12, width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🧭</div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 17 }}>SafeStop</div>
-            <div style={{ fontSize: 10, color: "#7c8ab8", letterSpacing: 1 }}>БЕЗОПАСЕН ПАРКИНГ НАВИГАТОР</div>
+            <div style={{ fontWeight: 800, fontSize: 17, color: textColor }}>SafeStop</div>
+            <div style={{ fontSize: 10, color: subTextColor, letterSpacing: 1 }}>БЕЗОПАСЕН ПАРКИНГ НАВИГАТОР</div>
           </div>
           <div style={{ flex: 1 }} />
-          <div style={{
-            display: "flex", alignItems: "center",
-            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 10, padding: "8px 14px", gap: 8, flex: "0 1 260px"
-          }}>
+          <div style={{ display: "flex", alignItems: "center", background: nightMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", border: `1px solid ${cardBorder}`, borderRadius: 10, padding: "8px 14px", gap: 8, flex: "0 1 260px" }}>
             <span style={{ opacity: 0.5 }}>🔍</span>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Търси място..."
-              style={{ background: "none", border: "none", outline: "none", color: "#e8eaf6", fontSize: 13, width: "100%" }}
-            />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Търси място..." style={{ background: "none", border: "none", outline: "none", color: textColor, fontSize: 13, width: "100%" }} />
           </div>
-          <button onClick={() => setShowAdd(true)} style={{
-            background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-            border: "none", borderRadius: 10, padding: "9px 16px",
-            color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap"
-          }}>+ Добави място</button>
+
+          {/* Day/Night toggle */}
+          <button onClick={() => setNightMode(!nightMode)} style={{
+            background: nightMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+            border: `1px solid ${cardBorder}`, borderRadius: 10,
+            padding: "8px 14px", cursor: "pointer", fontSize: 18, color: textColor
+          }}>
+            {nightMode ? "☀️" : "🌙"}
+          </button>
+
+          <button onClick={() => setShowAdd(true)} style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", border: "none", borderRadius: 10, padding: "9px 16px", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
+            + Добави място
+          </button>
         </div>
 
         {/* Tabs */}
@@ -235,7 +224,7 @@ export default function App() {
             <button key={key} onClick={() => setActiveTab(key)} style={{
               background: activeTab === key ? "rgba(59,130,246,0.15)" : "none",
               border: "none", borderBottom: activeTab === key ? "2px solid #3b82f6" : "2px solid transparent",
-              color: activeTab === key ? "#60a5fa" : "#7c8ab8",
+              color: activeTab === key ? "#60a5fa" : subTextColor,
               padding: "10px 18px", cursor: "pointer", fontSize: 13, fontWeight: 600,
             }}>{label}</button>
           ))}
@@ -243,31 +232,27 @@ export default function App() {
       </header>
 
       {/* Filters */}
-      <div style={{
-        background: "rgba(13,15,30,0.95)",
-        borderBottom: "1px solid rgba(100,140,255,0.07)",
-        padding: "8px 20px", zIndex: 999, position: "relative",
-      }}>
+      <div style={{ background: filterBg, borderBottom: `1px solid ${headerBorder}`, padding: "8px 20px", zIndex: 999, position: "relative" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 11, color: "#7c8ab8" }}>ТИП:</span>
+          <span style={{ fontSize: 11, color: subTextColor }}>ТИП:</span>
           {[["all","Всички"], ["camper","🚐 Кемпер"], ["tent","⛺ Палатка"]].map(([v, l]) => (
             <button key={v} onClick={() => setFilter(v)} style={{
-              background: filter === v ? "rgba(59,130,246,0.2)" : "rgba(255,255,255,0.04)",
-              border: filter === v ? "1px solid rgba(59,130,246,0.5)" : "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 8, padding: "4px 12px", color: filter === v ? "#60a5fa" : "#9ba3bf",
+              background: filter === v ? "rgba(59,130,246,0.2)" : cardBg,
+              border: filter === v ? "1px solid rgba(59,130,246,0.5)" : `1px solid ${cardBorder}`,
+              borderRadius: 8, padding: "4px 12px", color: filter === v ? "#60a5fa" : subTextColor,
               fontSize: 12, cursor: "pointer", fontWeight: 600,
             }}>{l}</button>
           ))}
-          <span style={{ fontSize: 11, color: "#7c8ab8", marginLeft: 8 }}>ЗОНА:</span>
+          <span style={{ fontSize: 11, color: subTextColor, marginLeft: 8 }}>ЗОНА:</span>
           {[["all","Всички"], ["природа","🌿 Природа"], ["градски","🏙️ Град"], ["планински","⛰️ Планини"]].map(([v, l]) => (
             <button key={v} onClick={() => setZoneFilter(v)} style={{
-              background: zoneFilter === v ? "rgba(6,182,212,0.2)" : "rgba(255,255,255,0.04)",
-              border: zoneFilter === v ? "1px solid rgba(6,182,212,0.5)" : "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 8, padding: "4px 12px", color: zoneFilter === v ? "#22d3ee" : "#9ba3bf",
+              background: zoneFilter === v ? "rgba(6,182,212,0.2)" : cardBg,
+              border: zoneFilter === v ? "1px solid rgba(6,182,212,0.5)" : `1px solid ${cardBorder}`,
+              borderRadius: 8, padding: "4px 12px", color: zoneFilter === v ? "#22d3ee" : subTextColor,
               fontSize: 12, cursor: "pointer", fontWeight: 600,
             }}>{l}</button>
           ))}
-          <span style={{ marginLeft: "auto", fontSize: 12, color: "#7c8ab8" }}>{filtered.length} места</span>
+          <span style={{ marginLeft: "auto", fontSize: 12, color: subTextColor }}>{filtered.length} места</span>
         </div>
       </div>
 
@@ -276,29 +261,14 @@ export default function App() {
 
         {/* MAP TAB */}
         {activeTab === "map" && (
-          <div style={{ display: "flex", height: "calc(100vh - 130px)" }}>
-
-            {/* Real Map */}
+          <div style={{ display: "flex", height: "calc(100vh - 130px)", position: "relative" }}>
             <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
-              <MapContainer
-               key="main-map"
-                center={[42.7, 23.3]}
-                zoom={9}
-                style={{ height: "100%", width: "100%" }}
-                zoomControl={true}
-              >
-                <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                />
+              <MapContainer center={[42.7, 23.3]} zoom={9} style={{ height: "100%", width: "100%" }} zoomControl={true}>
+                <TileLayer url={tileUrl} attribution='&copy; <a href="https://carto.com/">CARTO</a>' />
                 {selected && <FlyToSpot spot={selected} />}
                 {filtered.map(spot => (
-                  <Marker
-                    key={spot.id}
-                    position={[spot.lat, spot.lng]}
-                    icon={getIcon(spot.safety)}
-                    eventHandlers={{ click: () => setSelected(spot) }}
-                  >
+                  <Marker key={spot.id} position={[spot.lat, spot.lng]} icon={getIcon(spot.safety)}
+                    eventHandlers={{ click: () => setSelected(spot) }}>
                     <Popup>
                       <div style={{ minWidth: 160 }}>
                         <strong>{spot.name}</strong><br />
@@ -310,13 +280,9 @@ export default function App() {
               </MapContainer>
 
               {/* Legend */}
-              <div style={{
-                position: "absolute", bottom: 20, left: 20, zIndex: 1000,
-                background: "rgba(10,11,20,0.9)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 12, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 5
-              }}>
+              <div style={{ position: "absolute", bottom: 20, left: 20, zIndex: 1000, background: nightMode ? "rgba(10,11,20,0.9)" : "rgba(255,255,255,0.9)", border: `1px solid ${cardBorder}`, borderRadius: 12, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 5 }}>
                 {[["#22c55e", "Много безопасно (4.5+)"], ["#f59e0b", "Умерено (3.5-4.4)"], ["#ef4444", "Внимание (<3.5)"]].map(([c, l]) => (
-                  <div key={c} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#9ba3bf" }}>
+                  <div key={c} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: subTextColor }}>
                     <div style={{ width: 10, height: 10, borderRadius: "50%", background: c, boxShadow: `0 0 6px ${c}` }} />
                     {l}
                   </div>
@@ -325,108 +291,87 @@ export default function App() {
             </div>
 
             {/* Side panel */}
-            <div style={{
-              width: selected ? 340 : 0,
-              overflow: "hidden",
-              transition: "width 0.3s ease",
-              background: "#0d0f1e",
-              borderLeft: "1px solid rgba(100,140,255,0.12)",
-              flexShrink: 0,
-              zIndex: 2,
-            }}>
-              {selected && (
-                <div style={{ width: 340, height: "100%", overflowY: "auto", padding: 20 }}>
+            {selected && (
+              <div style={{
+                position: "absolute", right: 0, top: 0, bottom: 0,
+                width: 340, overflowY: "auto",
+                background: panelBg,
+                borderLeft: `1px solid ${headerBorder}`,
+                zIndex: 1000,
+                boxShadow: "-4px 0 20px rgba(0,0,0,0.2)",
+              }}>
+                <div style={{ padding: 20 }}>
+                  {/* Close button - fixed at top */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>{selected.name}</div>
+                    <div style={{ flex: 1, paddingRight: 10 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6, color: textColor }}>{selected.name}</div>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 11, color: "#7c8ab8", background: "rgba(255,255,255,0.05)", borderRadius: 6, padding: "2px 8px" }}>
-                          {typeLabels[selected.type]}
-                        </span>
-                        <span style={{ fontSize: 11, color: "#7c8ab8", background: "rgba(255,255,255,0.05)", borderRadius: 6, padding: "2px 8px" }}>
-                          {zoneLabels[selected.zone]}
-                        </span>
-                        {selected.verified && (
-                          <span style={{ fontSize: 11, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 6, padding: "2px 8px" }}>
-                            ✓ Верифицирано
-                          </span>
-                        )}
+                        <span style={{ fontSize: 11, color: subTextColor, background: cardBg, borderRadius: 6, padding: "2px 8px" }}>{typeLabels[selected.type]}</span>
+                        <span style={{ fontSize: 11, color: subTextColor, background: cardBg, borderRadius: 6, padding: "2px 8px" }}>{zoneLabels[selected.zone]}</span>
+                        {selected.verified && <span style={{ fontSize: 11, color: "#22d3ee", background: "rgba(6,182,212,0.1)", borderRadius: 6, padding: "2px 8px" }}>✓ Верифицирано</span>}
                       </div>
                     </div>
-                    <button onClick={() => setSelected(null)} style={{
-                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: 8, color: "#fff", cursor: "pointer", padding: "4px 10px"
-                    }}>✕</button>
+                    <button
+                      onClick={closeSelected}
+                      style={{
+                        background: nightMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                        border: `1px solid ${cardBorder}`,
+                        borderRadius: 8, color: textColor, cursor: "pointer",
+                        width: 32, height: 32, fontSize: 16,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0,
+                      }}>✕</button>
                   </div>
 
-                  <div style={{
-                    background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)",
-                    borderRadius: 12, padding: 14, marginBottom: 14,
-                    display: "flex", justifyContent: "space-between", alignItems: "center"
-                  }}>
+                  <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12, padding: 14, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <div style={{ fontSize: 11, color: "#7c8ab8", marginBottom: 2 }}>ИНДЕКС НА БЕЗОПАСНОСТ</div>
+                      <div style={{ fontSize: 11, color: subTextColor, marginBottom: 2 }}>ИНДЕКС НА БЕЗОПАСНОСТ</div>
                       <div style={{ fontSize: 28, fontWeight: 900, color: selected.safety >= 4.5 ? "#22c55e" : selected.safety >= 3.5 ? "#f59e0b" : "#ef4444" }}>
                         {selected.safety.toFixed(1)}<span style={{ fontSize: 14, opacity: 0.5 }}>/5</span>
                       </div>
                       <SafetyBadge score={selected.safety} />
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 11, color: "#7c8ab8" }}>{selected.reviews} отзива</div>
+                      <div style={{ fontSize: 11, color: subTextColor }}>{selected.reviews} отзива</div>
                       <StarRating value={selected.safety} size={16} />
-                      <div style={{ fontSize: 10, color: "#7c8ab8", marginTop: 4 }}>
-                        {selected.legal ? "✅ Легално" : "⚠️ Неясен статус"}
-                      </div>
+                      <div style={{ fontSize: 10, color: subTextColor, marginTop: 4 }}>{selected.legal ? "✅ Легално" : "⚠️ Неясен статус"}</div>
                     </div>
                   </div>
 
-                  <p style={{ fontSize: 13, color: "#a0aec0", lineHeight: 1.6, marginBottom: 14 }}>{selected.description}</p>
+                  <p style={{ fontSize: 13, color: nightMode ? "#a0aec0" : "#4a5568", lineHeight: 1.6, marginBottom: 14 }}>{selected.description}</p>
 
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, color: "#7c8ab8", marginBottom: 8, fontWeight: 700 }}>УДОБСТВА</div>
+                    <div style={{ fontSize: 11, color: subTextColor, marginBottom: 8, fontWeight: 700 }}>УДОБСТВА</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                       {selected.amenities.map(a => (
-                        <span key={a} style={{
-                          background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
-                          borderRadius: 8, padding: "4px 10px", fontSize: 12
-                        }}>{a}</span>
+                        <span key={a} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 8, padding: "4px 10px", fontSize: 12, color: textColor }}>{a}</span>
                       ))}
                     </div>
                   </div>
 
-                  <div style={{ fontSize: 11, color: "#7c8ab8", marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, color: subTextColor, marginBottom: 14 }}>
                     🕐 Последно проверено: {selected.lastChecked} · 📸 {selected.userPhotos} снимки
                   </div>
 
-                  <div style={{ fontSize: 11, color: "#7c8ab8", fontWeight: 700, marginBottom: 8 }}>ОТЗИВИ</div>
+                  <div style={{ fontSize: 11, color: subTextColor, fontWeight: 700, marginBottom: 8 }}>ОТЗИВИ</div>
                   {selected.comments.map((c, i) => (
-                    <div key={i} style={{
-                      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                      borderRadius: 10, padding: 12, marginBottom: 8
-                    }}>
+                    <div key={i} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700 }}>{c.user}</span>
-                        <span style={{ fontSize: 11, color: "#7c8ab8" }}>{c.date}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: textColor }}>{c.user}</span>
+                        <span style={{ fontSize: 11, color: subTextColor }}>{c.date}</span>
                       </div>
                       <StarRating value={c.rating} size={12} />
-                      <p style={{ fontSize: 12, color: "#9ba3bf", marginTop: 4, lineHeight: 1.5 }}>{c.text}</p>
+                      <p style={{ fontSize: 12, color: subTextColor, marginTop: 4, lineHeight: 1.5 }}>{c.text}</p>
                     </div>
                   ))}
 
                   <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                    <button onClick={() => showToast("🗺️ Навигацията е стартирана!")} style={{
-                      flex: 1, background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-                      border: "none", borderRadius: 10, padding: 11,
-                      color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer"
-                    }}>🧭 Навигирай</button>
-                    <button onClick={() => showToast("💾 Запазено в любими!")} style={{
-                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: 10, padding: "11px 14px", color: "#e8eaf6", fontSize: 18, cursor: "pointer"
-                    }}>🤍</button>
+                    <button onClick={() => showToast("🗺️ Навигацията е стартирана!")} style={{ flex: 1, background: "linear-gradient(135deg, #3b82f6, #06b6d4)", border: "none", borderRadius: 10, padding: 11, color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>🧭 Навигирай</button>
+                    <button onClick={() => showToast("💾 Запазено в любими!")} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, padding: "11px 14px", color: textColor, fontSize: 18, cursor: "pointer" }}>🤍</button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -435,26 +380,22 @@ export default function App() {
           <div style={{ maxWidth: 1100, margin: "0 auto", padding: 20, overflowY: "auto", maxHeight: "calc(100vh - 130px)" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
               {filtered.map(spot => (
-                <div key={spot.id} onClick={() => { setSelected(spot); setActiveTab("map"); }} style={{
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 16, padding: 18, cursor: "pointer",
-                }}
+                <div key={spot.id} onClick={() => { setSelected(spot); setActiveTab("map"); }}
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: 18, cursor: "pointer" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(59,130,246,0.07)"; e.currentTarget.style.borderColor = "rgba(59,130,246,0.3)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = cardBg; e.currentTarget.style.borderColor = cardBorder; }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                    <div style={{ fontWeight: 800, fontSize: 15, flex: 1, paddingRight: 8 }}>{spot.name}</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: spot.safety >= 4.5 ? "#22c55e" : spot.safety >= 3.5 ? "#f59e0b" : "#ef4444" }}>
-                      {spot.safety.toFixed(1)}
-                    </div>
+                    <div style={{ fontWeight: 800, fontSize: 15, flex: 1, paddingRight: 8, color: textColor }}>{spot.name}</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: spot.safety >= 4.5 ? "#22c55e" : spot.safety >= 3.5 ? "#f59e0b" : "#ef4444" }}>{spot.safety.toFixed(1)}</div>
                   </div>
-                  <p style={{ fontSize: 12, color: "#7c8ab8", marginBottom: 10, lineHeight: 1.5 }}>{spot.description}</p>
+                  <p style={{ fontSize: 12, color: subTextColor, marginBottom: 10, lineHeight: 1.5 }}>{spot.description}</p>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <span style={{ fontSize: 11, background: "rgba(255,255,255,0.05)", borderRadius: 6, padding: "2px 8px", color: "#9ba3bf" }}>{typeLabels[spot.type]}</span>
-                      <span style={{ fontSize: 11, background: "rgba(255,255,255,0.05)", borderRadius: 6, padding: "2px 8px", color: "#9ba3bf" }}>{zoneLabels[spot.zone]}</span>
+                      <span style={{ fontSize: 11, background: cardBg, borderRadius: 6, padding: "2px 8px", color: subTextColor }}>{typeLabels[spot.type]}</span>
+                      <span style={{ fontSize: 11, background: cardBg, borderRadius: 6, padding: "2px 8px", color: subTextColor }}>{zoneLabels[spot.zone]}</span>
                     </div>
-                    <span style={{ fontSize: 11, color: "#7c8ab8" }}>⭐ {spot.reviews} отзива</span>
+                    <span style={{ fontSize: 11, color: subTextColor }}>⭐ {spot.reviews} отзива</span>
                   </div>
                 </div>
               ))}
@@ -474,30 +415,23 @@ export default function App() {
                 ["✓", SPOTS.filter(s => s.verified).length, "Верифицирани"],
                 ["📸", SPOTS.reduce((a, b) => a + b.userPhotos, 0), "Снимки"],
               ].map(([icon, val, label]) => (
-                <div key={label} style={{
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 16, padding: 20, textAlign: "center"
-                }}>
+                <div key={label} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 28, marginBottom: 6 }}>{icon}</div>
                   <div style={{ fontSize: 32, fontWeight: 900, color: "#60a5fa", marginBottom: 4 }}>{val}</div>
-                  <div style={{ fontSize: 12, color: "#7c8ab8" }}>{label}</div>
+                  <div style={{ fontSize: 12, color: subTextColor }}>{label}</div>
                 </div>
               ))}
             </div>
-            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 20 }}>
-              <div style={{ fontWeight: 700, marginBottom: 16, fontSize: 14 }}>Места по безопасност</div>
+            <div style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: 20 }}>
+              <div style={{ fontWeight: 700, marginBottom: 16, fontSize: 14, color: textColor }}>Места по безопасност</div>
               {[...SPOTS].sort((a, b) => b.safety - a.safety).map(spot => (
                 <div key={spot.id} style={{ marginBottom: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 13 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 13, color: textColor }}>
                     <span>{spot.name}</span>
                     <span style={{ color: spot.safety >= 4.5 ? "#22c55e" : spot.safety >= 3.5 ? "#f59e0b" : "#ef4444", fontWeight: 700 }}>{spot.safety.toFixed(1)}</span>
                   </div>
-                  <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 99, height: 6, overflow: "hidden" }}>
-                    <div style={{
-                      height: "100%", width: `${(spot.safety / 5) * 100}%`,
-                      background: spot.safety >= 4.5 ? "#22c55e" : spot.safety >= 3.5 ? "#f59e0b" : "#ef4444",
-                      borderRadius: 99,
-                    }} />
+                  <div style={{ background: nightMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)", borderRadius: 99, height: 6, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${(spot.safety / 5) * 100}%`, background: spot.safety >= 4.5 ? "#22c55e" : spot.safety >= 3.5 ? "#f59e0b" : "#ef4444", borderRadius: 99 }} />
                   </div>
                 </div>
               ))}
@@ -508,35 +442,21 @@ export default function App() {
 
       {/* Add spot modal */}
       {showAdd && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
-          zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center"
-        }} onClick={() => setShowAdd(false)}>
-          <div style={{
-            background: "#0d0f1e", border: "1px solid rgba(100,140,255,0.2)",
-            borderRadius: 20, padding: 28, width: 400, maxWidth: "90vw",
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 20 }}>+ Добави ново място</div>
-            {[["Название на мястото", "text"], ["Описание", "text"], ["Координати (GPS)", "text"]].map(([label]) => (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowAdd(false)}>
+          <div style={{ background: panelBg, border: `1px solid ${headerBorder}`, borderRadius: 20, padding: 28, width: 400, maxWidth: "90vw" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ fontWeight: 800, fontSize: 18, color: textColor }}>+ Добави ново място</div>
+              <button onClick={() => setShowAdd(false)} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 8, color: textColor, cursor: "pointer", width: 32, height: 32, fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+            {["Название на мястото", "Описание", "Координати (GPS)"].map(label => (
               <div key={label} style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 11, color: "#7c8ab8", marginBottom: 6, fontWeight: 700 }}>{label.toUpperCase()}</div>
-                <input placeholder={label} style={{
-                  width: "100%", background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
-                  padding: "10px 14px", color: "#e8eaf6", fontSize: 13, outline: "none", boxSizing: "border-box"
-                }} />
+                <div style={{ fontSize: 11, color: subTextColor, marginBottom: 6, fontWeight: 700 }}>{label.toUpperCase()}</div>
+                <input placeholder={label} style={{ width: "100%", background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, padding: "10px 14px", color: textColor, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
               </div>
             ))}
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <button onClick={() => { setShowAdd(false); showToast("✅ Мястото е изпратено за проверка!"); }} style={{
-                flex: 1, background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-                border: "none", borderRadius: 10, padding: 12,
-                color: "#fff", fontWeight: 700, cursor: "pointer"
-              }}>Изпрати за проверка</button>
-              <button onClick={() => setShowAdd(false)} style={{
-                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 10, padding: "12px 16px", color: "#e8eaf6", cursor: "pointer"
-              }}>Отказ</button>
+              <button onClick={() => { setShowAdd(false); showToast("✅ Мястото е изпратено за проверка!"); }} style={{ flex: 1, background: "linear-gradient(135deg, #3b82f6, #06b6d4)", border: "none", borderRadius: 10, padding: 12, color: "#fff", fontWeight: 700, cursor: "pointer" }}>Изпрати за проверка</button>
+              <button onClick={() => setShowAdd(false)} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, padding: "12px 16px", color: textColor, cursor: "pointer" }}>Отказ</button>
             </div>
           </div>
         </div>
@@ -544,12 +464,7 @@ export default function App() {
 
       {/* Toast */}
       {toast && (
-        <div style={{
-          position: "fixed", bottom: 30, left: "50%", transform: "translateX(-50%)",
-          background: "rgba(13,15,30,0.95)", border: "1px solid rgba(59,130,246,0.4)",
-          borderRadius: 12, padding: "12px 24px", fontSize: 14, fontWeight: 600,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.5)", zIndex: 3000, color: "#e8eaf6"
-        }}>{toast}</div>
+        <div style={{ position: "fixed", bottom: 30, left: "50%", transform: "translateX(-50%)", background: nightMode ? "rgba(13,15,30,0.95)" : "rgba(255,255,255,0.95)", border: "1px solid rgba(59,130,246,0.4)", borderRadius: 12, padding: "12px 24px", fontSize: 14, fontWeight: 600, boxShadow: "0 8px 32px rgba(0,0,0,0.2)", zIndex: 3000, color: textColor }}>{toast}</div>
       )}
     </div>
   );
